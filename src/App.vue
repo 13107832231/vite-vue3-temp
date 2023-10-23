@@ -1,0 +1,91 @@
+<!--
+ * @Author: zhengjiefeng zhengjiefeng
+ * @Date: 2023-08-18 09:49:05
+ * @LastEditors: zhengjiefeng zhengjiefeng
+ * @LastEditTime: 2023-09-04 15:16:14
+ * @FilePath: \vite-vue3-temp\src\App.vue
+ * @Description: 
+ * 
+-->
+<script setup lang="ts">
+import { RouterLink, RouterView } from 'vue-router'
+</script>
+
+<template>
+  <!-- <nav>
+    <RouterLink to="/">Home</RouterLink>
+    <RouterLink to="/about">About</RouterLink>
+    <RouterLink to="/users">用户列表</RouterLink>
+    <RouterLink to="/login">login/register</RouterLink>
+  </nav> -->
+
+  <RouterView />
+</template>
+
+<style scoped>
+* {
+  margin: 0;
+  padding: 0;
+}
+header {
+  line-height: 1.5;
+  max-height: 100vh;
+}
+
+.logo {
+  display: block;
+  margin: 0 auto 2rem;
+}
+
+nav {
+  width: 100%;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 2rem;
+}
+
+nav a.router-link-exact-active {
+  color: var(--color-text);
+}
+
+nav a.router-link-exact-active:hover {
+  background-color: transparent;
+}
+
+nav a {
+  display: inline-block;
+  padding: 0 1rem;
+  border-left: 1px solid var(--color-border);
+}
+
+nav a:first-of-type {
+  border: 0;
+}
+
+@media (min-width: 1024px) {
+  /* header {
+    display: flex;
+    place-items: center;
+    padding-right: calc(var(--section-gap) / 2);
+  }
+
+  .logo {
+    margin: 0 2rem 0 0;
+  }
+
+  header .wrapper {
+    display: flex;
+    place-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  nav {
+    text-align: left;
+    margin-left: -1rem;
+    font-size: 1rem;
+
+    padding: 1rem 0;
+    margin-top: 1rem;
+  } */
+}
+</style>
