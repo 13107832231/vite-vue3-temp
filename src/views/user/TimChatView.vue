@@ -2,8 +2,8 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-10-19 13:41:02
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-10-23 08:56:43
- * @FilePath: \vite-vue3-temp\src\views\user\timChatView.vue
+ * @LastEditTime: 2023-10-23 11:53:02
+ * @FilePath: \vite-vue3-temp\src\views\user\TimChatView.vue
  * @Description: 
  * 
 -->
@@ -53,8 +53,11 @@
           <div class="msg-area" v-if="item.type == 'TIMImageElem'">
             <img
               :class="['img-content', item.flow === 'out' ? 'msg-out' : 'msg-in']"
-              :src="item.payload?.imageInfoArray?.[0]?.imageUrl"
+              :src="item.payload?.imageInfoArray?.[0]?.url"
             />
+            <div class="progress" v-if="item.progress">
+              <el-progress :percentage="item.progress" :color="colors" />
+            </div>
           </div>
         </div>
       </div>
@@ -63,6 +66,7 @@
           <div class="func-main">
             <span class="icon-pic">
               <el-icon><Picture /></el-icon>
+              <input type="file" data-type="image" accept="image/*" @change="getFile" />
             </span>
             <span class="icon-video">
               <el-icon><VideoCamera /></el-icon>
@@ -136,8 +140,16 @@ const currentUser = ref()
 // 消息列表
 const messageList = ref()
 const textarea = ref()
-const dialogVisible = ref(true)
+const dialogVisible = ref(false)
 const curUserID = ref('123456')
+const percentage = ref(0)
+const colors = [
+  { color: '#f56c6c', percentage: 20 },
+  { color: '#e6a23c', percentage: 40 },
+  { color: '#5cb87a', percentage: 60 },
+  { color: '#1989fa', percentage: 80 },
+  { color: '#6f7ad3', percentage: 100 }
+]
 
 let placeholder = ref('请输入消息')
 userList.value = [
@@ -172,48 +184,7 @@ messageList.value = [
     userId: '456',
     url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg'
   },
-  {
-    msgType: 'text',
-    msg: '好的',
-    isMine: false,
-    userId: '456',
-    url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg'
-  },
-  {
-    msgType: 'text',
-    msg: '到时候见面',
-    isMine: false,
-    userId: '456',
-    url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg'
-  },
-  {
-    msgType: 'text',
-    msg: '是是是',
-    isMine: false,
-    userId: '456',
-    url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg'
-  },
-  {
-    msgType: 'text',
-    msg: '牛牛牛',
-    isMine: false,
-    userId: '456',
-    url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg'
-  },
-  {
-    msgType: 'text',
-    msg: '6666',
-    isMine: false,
-    userId: '456',
-    url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg'
-  },
-  {
-    msgType: 'text',
-    msg: '牛牛牛',
-    isMine: false,
-    userId: '456',
-    url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg'
-  },
+
   {
     msgType: 'img',
     msg: '6666',
@@ -269,7 +240,6 @@ async function sendFun(data) {
       TIM.sendMessage(message)
     }
   }
-  textarea.value.childNodes=[]
 }
 function textareaRange() {
   var el = textarea
@@ -316,14 +286,12 @@ const handleFileDropOrPaste = async (e: any, type: string) => {
       const fileSrc = isImage ? URL.createObjectURL(file) : await drawFileCanvasToImageUrl(file)
       console.log(fileSrc, 'fileSrc')
 
-      console.log(textarea.value.childNodes[0].nodeName, 'vvvvv')
       // textarea.value.childNodes.push({
       //   type: 'image',
       //   url: fileSrc,
       //   width: 50,
       //   height: 50
       // })
-      console.log(textarea.value.childNodes, 'vvvvv5555')
 
       // {
       //       type: 'image',
@@ -362,6 +330,16 @@ const IMLogin = () => {
     userSig: loginOptions.userSig
   }
   TIM.login(userInfo)
+    .then((res) => {
+      console.log(res, '1111')
+      if (res.repeatLogin) {
+        TIM.logout()
+        IMLogin()
+      }
+    })
+    .catch((err) => {
+      console.log(err, 'eee')
+    })
 
   dialogVisible.value = false
 }
@@ -397,9 +375,10 @@ let onMessageReceived = function (event) {
 
 TIM.on(TencentCloudChat.EVENT.MESSAGE_RECEIVED, onMessageReceived)
 
+IMLogin()
+//fas
 let onSdkNotReady = function (event) {
   // chat.login({userID: 'your userID', userSig: 'your userSig'});
-  IMLogin()
 }
 TIM.on(TencentCloudChat.EVENT.SDK_NOT_READY, onSdkNotReady)
 
@@ -407,20 +386,12 @@ TIM.on(TencentCloudChat.EVENT.SDK_NOT_READY, onSdkNotReady)
 let onConversationListUpdated = function (event) {
   console.log(event.data, '213123') // 包含 Conversation 实例的数组
   userList.value = event.data
-  getMessageList(currentUser.value)
+  // getMessageList(currentUser.value)
 }
 TIM.on(TencentCloudChat.EVENT.CONVERSATION_LIST_UPDATED, onConversationListUpdated)
 
 let onSdkReady = function (event) {
   console.log('onSdkReadyonSdkReadyonSdkReady')
-
-  // getMessageList()
-  // let message = TIM.createTextMessage({
-  //   to: '123',
-  //   conversationType: 'C2C',
-  //   payload: { text: 'Hello world!' }
-  // })
-  // TIM.sendMessage(message)
 }
 TIM.on(TencentCloudChat.EVENT.SDK_READY, onSdkReady)
 
@@ -449,11 +420,50 @@ function getMessageList(params) {
     const isCompleted = imResponse.data.isCompleted // 表示是否已经拉完所有消息。
   })
 }
+// 创建图片消息
+function createImageMessage(file: any, callback: Function) {
+  let message = TIM.createImageMessage({
+    to: '123',
+    conversationType: TencentCloudChat.TYPES.CONV_C2C,
+    payload: {
+      file
+    },
+    // 消息自定义数据（云端保存，会发送到对端，程序卸载重装后还能拉取到）
+    // cloudCustomData: 'your cloud custom data'
+    onProgress: function (event) {
+      console.log('file uploading:', event, message, 'mmm')
+      message.progress = event * 100
+      messageList.value = messageList.value.map((item: any) => {
+        if (item.ID === message.ID) {
+          return { ...message, progress: parseInt(event * 100) }
+        }
+        return item
+      })
+    }
+  })
+  return message
+}
 
 // 点击选中联系人
 function selectUserFun(item) {
   currentUser.value = item
   getMessageList(item)
+}
+// 获取文件
+async function getFile(e) {
+  console.log(e.target.files)
+
+  let message = createImageMessage(e.target.files[0])
+  messageList.value.push(message)
+  console.log(message, 'messagemessage')
+  const imResponse = await TIM.sendMessage(message)
+  message.progress = 0
+  messageList.value = messageList.value.map((item: any) => {
+    if (item.ID === imResponse.data.message.ID) {
+      return imResponse.data.message
+    }
+    return item
+  })
 }
 </script>
 
