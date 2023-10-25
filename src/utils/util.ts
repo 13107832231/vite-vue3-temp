@@ -2,7 +2,7 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-10-20 14:56:14
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-10-22 19:45:44
+ * @LastEditTime: 2023-10-24 15:41:46
  * @FilePath: \vite-vue3-temp\src\utils\util.ts
  * @Description: 
  * 
@@ -96,6 +96,44 @@ export function caculateTimeago(dateTimeStamp: number) {
     result = `${Nyear}-${Nmonth}-${Ndate}`;
   }
   return result;
+}
+export function calculateTimestamp(timestamp: number) {
+  const todayZero = new Date().setHours(0, 0, 0, 0);
+  const thisYear = new Date(new Date().getFullYear(), 0, 1, 0, 0, 0, 0).getTime();
+  const target = new Date(timestamp);
+
+  const oneDay = 24 * 60 * 60 * 1000;
+  const oneWeek = 7 * oneDay;
+  const oneYear = 365 * oneDay;
+
+  const diff = todayZero - target.getTime();
+
+  function formatNum(num: number): string {
+    return num < 10 ? '0' + num : num.toString();
+  }
+
+  if (diff <= 0) {
+    // today, only display hour:minute
+    return `${formatNum(target.getHours())}:${formatNum(target.getMinutes())}`;
+  } else if (diff <= oneDay) {
+    // yesterday, display yesterday:hour:minute
+    return `昨天 ${formatNum(target.getHours())}:${formatNum(target.getMinutes())}`;
+  } else if (diff <= oneWeek - oneDay) {
+    // Within a week, display weekday hour:minute
+    const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+    const weekday = weekdays[target.getDay()];
+    return `${weekday} ${formatNum(target.getHours())}:${formatNum(target.getMinutes())}`;
+  } else if (target.getTime() >= thisYear) {
+    // Over a week, within this year, display mouth/day hour:minute
+    return `${target.getMonth() + 1}/${target.getDate()} ${formatNum(target.getHours())}:${formatNum(
+      target.getMinutes()
+    )}`;
+  } else {
+    // Not within this year, display year/mouth/day hour:minute
+    return `${target.getFullYear()}/${target.getMonth() + 1}/${target.getDate()} ${formatNum(
+      target.getHours()
+    )}:${formatNum(target.getMinutes())}`;
+  }
 }
 
 

@@ -2,14 +2,14 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-10-19 13:41:02
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-10-23 11:53:02
+ * @LastEditTime: 2023-10-25 13:54:06
  * @FilePath: \vite-vue3-temp\src\views\user\TimChatView.vue
  * @Description: 
  * 
 -->
 <template>
   <div class="container">
-    <div class="user-list">
+    <div class="user-list" v-loading="userListLoading">
       <div
         :class="['user-item', item.conversationID === currentUser?.conversationID && 'selected']"
         v-for="item in userList"
@@ -31,32 +31,38 @@
     </div>
     <div class="chat-content">
       <div class="chat-header">
-        <div>张三</div>
+        <div>张三11111</div>
         <div></div>
       </div>
-      <div class="message-list">
-        <div
-          :class="['message-bubble', item.flow === 'out' && 'reverse']"
-          v-for="item in messageList"
-          :key="item.userId"
-        >
-          <img
-            class="avatar"
-            :src="item.avatar || 'https://web.sdk.qcloud.com/component/TUIKit/assets/avatar_21.png'"
-            alt=""
-          />
-          <div class="msg-area" v-if="item.type == 'TIMTextElem'">
-            <div :class="['text-content', item.flow === 'out' ? 'msg-out' : 'msg-in']">
-              {{ item.payload?.text }}
-            </div>
-          </div>
-          <div class="msg-area" v-if="item.type == 'TIMImageElem'">
+      <div v-loading="chatLoading" class="message-list" ref="messageListRef">
+        <div v-for="item in messageList" :key="item.userId">
+          <div class="message-timestamp">{{ calculateTimestamp(item.time * 1000) }}</div>
+          <div :class="['message-bubble', item.flow === 'out' && 'reverse']">
             <img
-              :class="['img-content', item.flow === 'out' ? 'msg-out' : 'msg-in']"
-              :src="item.payload?.imageInfoArray?.[0]?.url"
+              class="avatar"
+              :src="
+                item.avatar || 'https://web.sdk.qcloud.com/component/TUIKit/assets/avatar_21.png'
+              "
+              alt=""
             />
-            <div class="progress" v-if="item.progress">
-              <el-progress :percentage="item.progress" :color="colors" />
+            <div class="msg-area" v-if="item.type == 'TIMTextElem'">
+              <div :class="['text-content', item.flow === 'out' ? 'msg-out' : 'msg-in']">
+                {{ item.payload?.text }}
+              </div>
+            </div>
+            <div class="msg-area" v-if="item.type == 'TIMImageElem'">
+              <el-image
+                :class="['img-content', item.flow === 'out' ? 'msg-out' : 'msg-in']"
+                :src="item.payload?.imageInfoArray?.[0]?.url"
+                :zoom-rate="1.2"
+                :max-scale="7"
+                :min-scale="0.2"
+                :preview-src-list="[item.payload?.imageInfoArray?.[0]?.url]"
+                fit="cover"
+              />
+              <div class="progress" v-if="item.progress">
+                <el-progress :percentage="item.progress" :color="colors" />
+              </div>
             </div>
           </div>
         </div>
@@ -124,7 +130,13 @@ import TencentCloudChat from '@tencentcloud/chat'
 import { Picture, VideoCamera } from '@element-plus/icons-vue'
 import { genTestUserSig } from '@/utils/getUserSig/GenerateTestUserSig'
 import { SDKAppID, secretKey } from '@/config/timConfig'
-import { base64ToFile, isBase64, urlToFile, caculateTimeago } from '@/utils/util'
+import {
+  base64ToFile,
+  isBase64,
+  urlToFile,
+  caculateTimeago,
+  calculateTimestamp
+} from '@/utils/util'
 import { getCurrentInstance } from '@vue/runtime-core'
 const {
   appContext,
@@ -136,10 +148,13 @@ const {
 } = getCurrentInstance()
 
 const userList = ref()
+const userListLoading = ref(false)
+const chatLoading = ref(false)
 const currentUser = ref()
 // 消息列表
 const messageList = ref()
 const textarea = ref()
+const messageListRef = ref()
 const dialogVisible = ref(false)
 const curUserID = ref('123456')
 const percentage = ref(0)
@@ -153,65 +168,67 @@ const colors = [
 
 let placeholder = ref('请输入消息')
 userList.value = [
-  {
-    url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg',
-    name: '张三',
-    time: '2023-10-19 13:10:10',
-    userId: '123',
-    curText: '哈哈',
-    userProfile: {
-      userID: '123',
-      avatar: 'https://web.sdk.qcloud.com/component/TUIKit/assets/avatar_21.png'
-    },
-    lastMessage: {
-      lastTime: 1697789616,
-      messageForShow: '是'
-    }
-  }
+  // {
+  //   url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg',
+  //   name: '张三',
+  //   time: '2023-10-19 13:10:10',
+  //   userId: '123',
+  //   curText: '哈哈',
+  //   userProfile: {
+  //     userID: '123',
+  //     avatar: 'https://web.sdk.qcloud.com/component/TUIKit/assets/avatar_21.png'
+  //   },
+  //   lastMessage: {
+  //     lastTime: 1697789616,
+  //     messageForShow: '是'
+  //   }
+  // }
 ]
 messageList.value = [
-  {
-    msgType: 'text',
-    msg: 'hahaha',
-    isMine: true,
-    userId: '123',
-    url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg'
-  },
-  {
-    msgType: 'text',
-    msg: '对对对',
-    isMine: false,
-    userId: '456',
-    url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg'
-  },
-
-  {
-    msgType: 'img',
-    msg: '6666',
-    isMine: true,
-    userId: '456',
-    url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg',
-    imgUrl:
-      'https://cos.ap-shanghai.myqcloud.com/caae-shanghai-007-sharedv4-02-1303031839/6ea1-1400505295/6e35-12345/8328b444e377c5b9634f189cfec0fb71-151032.png?imageMogr2/'
-  },
-  {
-    msgType: 'img',
-    msg: '6666',
-    isMine: false,
-    userId: '456',
-    url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg',
-    imgUrl:
-      'https://cos.ap-shanghai.myqcloud.com/caae-shanghai-007-sharedv4-02-1303031839/6ea1-1400505295/6e35-12345/8328b444e377c5b9634f189cfec0fb71-151032.png?imageMogr2/'
-  }
+  // {
+  //   msgType: 'text',
+  //   msg: 'hahaha',
+  //   isMine: true,
+  //   userId: '123',
+  //   url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg'
+  // },
+  // {
+  //   msgType: 'text',
+  //   msg: '对对对',
+  //   isMine: false,
+  //   userId: '456',
+  //   url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg'
+  // },
+  // {
+  //   msgType: 'img',
+  //   msg: '6666',
+  //   isMine: true,
+  //   userId: '456',
+  //   url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg',
+  //   imgUrl:
+  //     'https://cos.ap-shanghai.myqcloud.com/caae-shanghai-007-sharedv4-02-1303031839/6ea1-1400505295/6e35-12345/8328b444e377c5b9634f189cfec0fb71-151032.png?imageMogr2/'
+  // },
+  // {
+  //   msgType: 'img',
+  //   msg: '6666',
+  //   isMine: false,
+  //   userId: '456',
+  //   url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg',
+  //   imgUrl:
+  //     'https://cos.ap-shanghai.myqcloud.com/caae-shanghai-007-sharedv4-02-1303031839/6ea1-1400505295/6e35-12345/8328b444e377c5b9634f189cfec0fb71-151032.png?imageMogr2/'
+  // }
 ]
 
 async function sendFun(data) {
+  if (textarea.value.childNodes.length === 0) {
+    return
+  }
   for (let i = 0; i < textarea.value.childNodes.length; i++) {
     const element = textarea.value.childNodes[i]
     console.log(element, 'element', element.nodeValue, textarea.value)
     if (element.nodeName === '#text') {
       let message = TIM.createTextMessage({
-        to: '123',
+        to: currentUser.value.userProfile.userID,
         conversationType: TencentCloudChat.TYPES.CONV_C2C,
         payload: { text: element.nodeValue }
       })
@@ -225,21 +242,10 @@ async function sendFun(data) {
       }
 
       console.log(file, isBase64(element.currentSrc), 'dd')
-      let message = TIM.createImageMessage({
-        to: '123',
-        conversationType: TencentCloudChat.TYPES.CONV_C2C,
-        payload: {
-          file
-        },
-        // 消息自定义数据（云端保存，会发送到对端，程序卸载重装后还能拉取到）
-        // cloudCustomData: 'your cloud custom data'
-        onProgress: function (event) {
-          console.log('file uploading:', event)
-        }
-      })
-      TIM.sendMessage(message)
+      createImageMessage(file)
     }
   }
+  textarea.value.innerHTML = ''
 }
 function textareaRange() {
   var el = textarea
@@ -319,6 +325,9 @@ const handleFileDropOrPaste = async (e: any, type: string) => {
   }
 }
 const IMLogin = () => {
+  userListLoading.value = true
+  chatLoading.value = true
+
   const loginOptions = genTestUserSig({
     SDKAppID,
     secretKey,
@@ -376,7 +385,7 @@ let onMessageReceived = function (event) {
 TIM.on(TencentCloudChat.EVENT.MESSAGE_RECEIVED, onMessageReceived)
 
 IMLogin()
-//fas
+
 let onSdkNotReady = function (event) {
   // chat.login({userID: 'your userID', userSig: 'your userSig'});
 }
@@ -386,12 +395,17 @@ TIM.on(TencentCloudChat.EVENT.SDK_NOT_READY, onSdkNotReady)
 let onConversationListUpdated = function (event) {
   console.log(event.data, '213123') // 包含 Conversation 实例的数组
   userList.value = event.data
-  // getMessageList(currentUser.value)
+  userListLoading.value = false
+
+  getMessageList(currentUser.value)
 }
 TIM.on(TencentCloudChat.EVENT.CONVERSATION_LIST_UPDATED, onConversationListUpdated)
 
 let onSdkReady = function (event) {
   console.log('onSdkReadyonSdkReadyonSdkReady')
+  if (!currentUser?.value?.conversationID) {
+    selectUserFun(userList.value[0])
+  }
 }
 TIM.on(TencentCloudChat.EVENT.SDK_READY, onSdkReady)
 
@@ -415,15 +429,20 @@ function getMessageList(params) {
   let promise = TIM.getMessageList({ conversationID: params.conversationID })
   promise.then(function (imResponse) {
     console.log(imResponse, 'imResponseimResponse')
+    chatLoading.value = false
     messageList.value = imResponse.data.messageList // 消息列表。
     const nextReqMessageID = imResponse.data.nextReqMessageID // 用于续拉，分页续拉时需传入该字段。
     const isCompleted = imResponse.data.isCompleted // 表示是否已经拉完所有消息。
+    // // 自动滚动到底部
+    nextTick(() => {
+      messageListRef.value.scrollTop = messageListRef.value.scrollHeight
+    })
   })
 }
 // 创建图片消息
-function createImageMessage(file: any, callback: Function) {
+async function createImageMessage(file: any) {
   let message = TIM.createImageMessage({
-    to: '123',
+    to: currentUser.value.userProfile.userID,
     conversationType: TencentCloudChat.TYPES.CONV_C2C,
     payload: {
       file
@@ -441,21 +460,8 @@ function createImageMessage(file: any, callback: Function) {
       })
     }
   })
-  return message
-}
 
-// 点击选中联系人
-function selectUserFun(item) {
-  currentUser.value = item
-  getMessageList(item)
-}
-// 获取文件
-async function getFile(e) {
-  console.log(e.target.files)
-
-  let message = createImageMessage(e.target.files[0])
   messageList.value.push(message)
-  console.log(message, 'messagemessage')
   const imResponse = await TIM.sendMessage(message)
   message.progress = 0
   messageList.value = messageList.value.map((item: any) => {
@@ -464,6 +470,19 @@ async function getFile(e) {
     }
     return item
   })
+}
+
+// 点击选中联系人
+function selectUserFun(item) {
+  console.log(item, 'iiiiii')
+  currentUser.value = item
+  getMessageList(item)
+}
+// 获取文件
+function getFile(e) {
+  console.log(e.target.files)
+
+  createImageMessage(e.target.files[0])
 }
 </script>
 
