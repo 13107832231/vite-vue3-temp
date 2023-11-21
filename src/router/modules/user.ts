@@ -2,7 +2,7 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-08-31 13:52:30
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-10-19 13:42:02
+ * @LastEditTime: 2023-11-16 15:51:04
  * @FilePath: \vite-vue3-temp\src\router\modules\user.ts
  * @Description: 
  * 
@@ -33,7 +33,7 @@ export default {
     },
     {
       path: '/user/chat',
-      name: 'TimChatView',
+      name: 'userChat',
 
       component: () => import('@/views/user/TimChatView.vue')
     },

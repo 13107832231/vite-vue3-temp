@@ -2,7 +2,7 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-08-31 11:13:16
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-09-05 09:22:38
+ * @LastEditTime: 2023-11-17 10:17:00
  * @FilePath: \vite-vue3-temp\src\views\components\Layout\SysLayout.vue
  * @Description: 
  * 
@@ -27,6 +27,5 @@
 </template>
 
 <script setup lang="ts">
-import { Setting } from '@element-plus/icons-vue'
 import Menu from '@/views/components/Layout/SysMenu.vue'
 </script>

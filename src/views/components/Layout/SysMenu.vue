@@ -2,7 +2,7 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-08-31 11:13:16
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-08-31 17:30:13
+ * @LastEditTime: 2023-11-17 10:15:52
  * @FilePath: \vite-vue3-temp\src\views\components\Layout\SysMenu.vue
  * @Description: 
  * 
@@ -18,7 +18,7 @@
     </div>
     <el-menu
       :collapse="isCollapse"
-      default-active="2"
+      :default-active="activeMenuKey"
       class="menu-content"
       @open="handleOpen"
       @close="handleClose"
@@ -27,7 +27,10 @@
       <template v-for="item in menuList" :key="item.key">
         <el-sub-menu v-if="item.children && item.children.length > 0" :index="item.key">
           <template #title>
-            <el-icon><location /></el-icon>
+            <el-icon>
+              <component :is="item.icon"></component>
+            </el-icon>
+
             <span>{{ item.name }}</span>
           </template>
 
@@ -40,7 +43,7 @@
           >
         </el-sub-menu>
         <el-menu-item :index="item.key" @click="goPage(sub.path)" v-else>
-          {{ item.name }}11
+          {{ item.name }}
         </el-menu-item>
       </template>
 
@@ -79,14 +82,7 @@
 
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
-import {
-  Document,
-  Menu as IconMenu,
-  Location,
-  Setting,
-  Expand,
-  Fold
-} from '@element-plus/icons-vue'
+
 import menuList from '@/utils/menuList.ts'
 
 const router = useRouter()
@@ -95,8 +91,10 @@ const isCollapse = ref()
 onMounted(() => {
   console.log(1231)
 })
+const activeMenuKey = computed(() => {
+  return router.currentRoute.value.name
+})
 
-console.log(router, 'routerrouter', route, menuList)
 const handleOpen = (key: string, keyPath: string[]) => {
   console.log(key, keyPath)
 }

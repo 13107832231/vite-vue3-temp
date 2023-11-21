@@ -2,7 +2,7 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-08-18 09:49:05
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-10-20 11:09:41
+ * @LastEditTime: 2023-11-21 17:14:59
  * @FilePath: \vite-vue3-temp\src\main.ts
  * @Description: 
  * 
@@ -17,8 +17,17 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+
+
+
 
 const app = createApp(App)
+
+// 注册所有图标
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+  app.component(key, component)
+}
 
 app.config.globalProperties.TIM = chat
 

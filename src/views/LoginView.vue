@@ -2,7 +2,7 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-08-18 09:49:05
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-09-12 15:22:33
+ * @LastEditTime: 2023-11-21 09:19:20
  * @FilePath: \vite-vue3-temp\src\views\LoginView.vue
  * @Description: 
  * 
@@ -12,7 +12,7 @@ import { post } from '@/api/http'
 
 import { useRouter } from 'vue-router'
 import type { UploadProps } from 'element-plus'
-import { Plus } from '@element-plus/icons-vue'
+console.log(import.meta.env,'import.meta.env')
 const router = useRouter()
 interface User {
   username: String
@@ -122,6 +122,7 @@ console.log(isValid(str))
 <template>
   <main class="container">
     <h2 class="title">vue3-vite-后台管理系统</h2>
+   
     <div class="card-box">
       <el-tabs v-model="activeName" class="demo-tabs" @tab-click="handleClick">
         <el-tab-pane label="登录" name="login">

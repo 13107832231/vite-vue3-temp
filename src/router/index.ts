@@ -2,7 +2,7 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-08-18 09:49:05
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-09-01 15:38:47
+ * @LastEditTime: 2023-11-16 16:03:08
  * @FilePath: \vite-vue3-temp\src\router\index.ts
  * @Description: 
  * 
@@ -40,9 +40,11 @@ const router: Routers[] = [
     redirect: '/user',
     component: SysLayout,
     children: [
-      modules.user
+      modules.user,
+      modules.largeData,
     ]
   },
+
   {
     path: '/login',
     name: 'userLogin',

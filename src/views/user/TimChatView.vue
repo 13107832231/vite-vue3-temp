@@ -2,36 +2,44 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-10-19 13:41:02
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-10-25 13:54:06
+ * @LastEditTime: 2023-11-17 15:06:09
  * @FilePath: \vite-vue3-temp\src\views\user\TimChatView.vue
  * @Description: 
  * 
 -->
 <template>
   <div class="container">
-    <div class="user-list" v-loading="userListLoading">
-      <div
-        :class="['user-item', item.conversationID === currentUser?.conversationID && 'selected']"
-        v-for="item in userList"
-        :key="item.userId"
-        @click="selectUserFun(item)"
-      >
-        <img
-          class="avatar"
-          :src="item.avatar || 'https://web.sdk.qcloud.com/component/TUIKit/assets/avatar_21.png'"
-          alt=""
-          srcset=""
-        />
-        <div class="mid">
-          <div class="name">{{ item.userProfile?.userID }}</div>
-          <div class="cur">{{ item.lastMessage?.messageForShow }}</div>
+    <div class="chat-left">
+      <div class="chat-action">
+        <el-button :icon="Plus" text bg>发起单聊</el-button>
+      </div>
+
+      <div class="user-list" v-loading="userListLoading">
+        <div
+          :class="['user-item', item.conversationID === currentUser?.conversationID && 'selected']"
+          v-for="item in userList"
+          :key="item.userId"
+          @click="selectUserFun(item)"
+        >
+          <img
+            class="avatar"
+            :src="item.avatar || 'https://web.sdk.qcloud.com/component/TUIKit/assets/avatar_21.png'"
+            alt=""
+            srcset=""
+          />
+          <div class="mid">
+            <div class="name">{{ item.userProfile?.userID }}</div>
+            <div class="cur">{{ item.lastMessage?.messageForShow }}</div>
+          </div>
+          <span class="time">{{ caculateTimeago(item.lastMessage?.lastTime * 1000) }}</span>
         </div>
-        <span class="time">{{ caculateTimeago(item.lastMessage?.lastTime * 1000) }}</span>
       </div>
     </div>
-    <div class="chat-content">
+
+    <div class="chat-content" v-if="currentUser?.conversationID">
       <div class="chat-header">
-        <div>张三11111</div>
+        <div>{{ currentUser?.userProfile?.userID }}</div>
+
         <div></div>
       </div>
       <div v-loading="chatLoading" class="message-list" ref="messageListRef">
@@ -64,6 +72,28 @@
                 <el-progress :percentage="item.progress" :color="colors" />
               </div>
             </div>
+            <div class="msg-area" v-if="item.type == 'TIMVideoFileElem'">
+              <div
+                class="message-video-box"
+                :style="{
+                  width: item.payload.snapshotWidth / 4.3,
+                  height: item.payload.snapshotHeight / 4.3
+                }"
+              >
+                <video
+                  :width="item.payload.snapshotWidth / 4.3"
+                  :height="item.payload.snapshotHeight / 4.3"
+                  class="video"
+                  :src="item.payload.remoteVideoUrl"
+                  controls
+                  preload="metadata"
+                ></video>
+              </div>
+
+              <div class="progress" v-if="item.progress">
+                <el-progress :percentage="item.progress" :color="colors" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -76,6 +106,13 @@
             </span>
             <span class="icon-video">
               <el-icon><VideoCamera /></el-icon>
+              <input
+                type="file"
+                accept="video/*"
+                capture="user"
+                ref="videoFile"
+                @change="(e) => createImageMessage(e.target.files[0], 'video')"
+              />
             </span>
           </div>
         </div>
@@ -113,6 +150,7 @@
         </div>
       </div>
     </div>
+    <div v-else class="chat-null">欢迎使用im聊天</div>
     <el-dialog v-model="dialogVisible" title="登录im" width="40%">
       <el-input placeholder="请输入userId" v-model="curUserID"></el-input>
       <template #footer>
@@ -127,7 +165,6 @@
 
 <script setup lang="ts">
 import TencentCloudChat from '@tencentcloud/chat'
-import { Picture, VideoCamera } from '@element-plus/icons-vue'
 import { genTestUserSig } from '@/utils/getUserSig/GenerateTestUserSig'
 import { SDKAppID, secretKey } from '@/config/timConfig'
 import {
@@ -139,7 +176,6 @@ import {
 } from '@/utils/util'
 import { getCurrentInstance } from '@vue/runtime-core'
 const {
-  appContext,
   appContext: {
     config: {
       globalProperties: { TIM }
@@ -150,7 +186,7 @@ const {
 const userList = ref()
 const userListLoading = ref(false)
 const chatLoading = ref(false)
-const currentUser = ref()
+const currentUser = ref({})
 // 消息列表
 const messageList = ref()
 const textarea = ref()
@@ -242,7 +278,7 @@ async function sendFun(data) {
       }
 
       console.log(file, isBase64(element.currentSrc), 'dd')
-      createImageMessage(file)
+      createImageMessage(file, 'image')
     }
   }
   textarea.value.innerHTML = ''
@@ -326,7 +362,6 @@ const handleFileDropOrPaste = async (e: any, type: string) => {
 }
 const IMLogin = () => {
   userListLoading.value = true
-  chatLoading.value = true
 
   const loginOptions = genTestUserSig({
     SDKAppID,
@@ -356,7 +391,7 @@ const IMLogin = () => {
 let onMessageReceived = function (event) {
   // event.data - 存储 Message 对象的数组 - [Message]
   messageList.value = event.data
-  console.log(messageList.value, ' messageList.value')
+  console.log(messageList.value, ' messageList.value111')
   messageList.value.forEach((message) => {
     if (message.type === TencentCloudChat.TYPES.MSG_TEXT) {
       // 文本消息 - https://web.sdk.qcloud.com/im/doc/v3/zh-cn/Message.html#.TextPayload
@@ -393,8 +428,9 @@ TIM.on(TencentCloudChat.EVENT.SDK_NOT_READY, onSdkNotReady)
 
 // 会话列表更新，event.data 是包含 Conversation 对象的数组。
 let onConversationListUpdated = function (event) {
-  console.log(event.data, '213123') // 包含 Conversation 实例的数组
+  console.log(event.data, '22222') // 包含 Conversation 实例的数组
   userList.value = event.data
+  // userList.value = []
   userListLoading.value = false
 
   getMessageList(currentUser.value)
@@ -402,8 +438,7 @@ let onConversationListUpdated = function (event) {
 TIM.on(TencentCloudChat.EVENT.CONVERSATION_LIST_UPDATED, onConversationListUpdated)
 
 let onSdkReady = function (event) {
-  console.log('onSdkReadyonSdkReadyonSdkReady')
-  if (!currentUser?.value?.conversationID) {
+  if (userList.value.length > 0 && !currentUser?.value?.conversationID) {
     selectUserFun(userList.value[0])
   }
 }
@@ -425,7 +460,10 @@ TIM.on(TencentCloudChat.EVENT.SDK_READY, onSdkReady)
 //       console.warn('getConversationList error:', imError)
 //     })
 // }
-function getMessageList(params) {
+function getMessageList(params = {}) {
+  if (!params.conversationID) return
+  chatLoading.value = true
+
   let promise = TIM.getMessageList({ conversationID: params.conversationID })
   promise.then(function (imResponse) {
     console.log(imResponse, 'imResponseimResponse')
@@ -440,26 +478,50 @@ function getMessageList(params) {
   })
 }
 // 创建图片消息
-async function createImageMessage(file: any) {
-  let message = TIM.createImageMessage({
-    to: currentUser.value.userProfile.userID,
-    conversationType: TencentCloudChat.TYPES.CONV_C2C,
-    payload: {
-      file
-    },
-    // 消息自定义数据（云端保存，会发送到对端，程序卸载重装后还能拉取到）
-    // cloudCustomData: 'your cloud custom data'
-    onProgress: function (event) {
-      console.log('file uploading:', event, message, 'mmm')
-      message.progress = event * 100
-      messageList.value = messageList.value.map((item: any) => {
-        if (item.ID === message.ID) {
-          return { ...message, progress: parseInt(event * 100) }
-        }
-        return item
-      })
-    }
-  })
+async function createImageMessage(file: any, type: string) {
+  let message = ''
+  if (type === 'image') {
+    message = TIM.createImageMessage({
+      to: currentUser.value.userProfile.userID,
+      conversationType: TencentCloudChat.TYPES.CONV_C2C,
+      payload: {
+        file
+      },
+      // 消息自定义数据（云端保存，会发送到对端，程序卸载重装后还能拉取到）
+      // cloudCustomData: 'your cloud custom data'
+      onProgress: function (event) {
+        console.log('file uploading:', event, message, 'mmm')
+        message.progress = event * 100
+        messageList.value = messageList.value.map((item: any) => {
+          if (item.ID === message.ID) {
+            return { ...message, progress: parseInt(event * 100) }
+          }
+          return item
+        })
+      }
+    })
+  }
+  if (type === 'video') {
+    message = TIM.createVideoMessage({
+      to: currentUser.value.userProfile.userID,
+      conversationType: TencentCloudChat.TYPES.CONV_C2C,
+      payload: {
+        file
+      },
+      // 消息自定义数据（云端保存，会发送到对端，程序卸载重装后还能拉取到）
+      // cloudCustomData: 'your cloud custom data'
+      onProgress: function (event) {
+        console.log('file uploading:', event, message, 'mmm')
+        message.progress = event * 100
+        messageList.value = messageList.value.map((item: any) => {
+          if (item.ID === message.ID) {
+            return { ...message, progress: parseInt(event * 100) }
+          }
+          return item
+        })
+      }
+    })
+  }
 
   messageList.value.push(message)
   const imResponse = await TIM.sendMessage(message)
@@ -480,9 +542,9 @@ function selectUserFun(item) {
 }
 // 获取文件
 function getFile(e) {
-  console.log(e.target.files)
+  console.log(e.target.files[0])
 
-  createImageMessage(e.target.files[0])
+  createImageMessage(e.target.files[0], 'image')
 }
 </script>
 

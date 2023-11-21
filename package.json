@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "run-p type-check build-only",
+    "prod": "vite --mode production",
+    "build": "run-p build-only",
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false",
@@ -14,6 +15,7 @@
   "dependencies": {
     "@tencentcloud/chat": "^3.2.1",
     "axios": "^1.4.0",
+    "echarts": "^5.4.3",
     "element-plus": "^2.3.9",
     "less": "^4.2.0",
     "less-loader": "^11.1.3",
