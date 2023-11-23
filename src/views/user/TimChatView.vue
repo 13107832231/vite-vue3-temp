@@ -2,7 +2,7 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-10-19 13:41:02
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-11-17 15:06:09
+ * @LastEditTime: 2023-11-23 15:38:08
  * @FilePath: \vite-vue3-temp\src\views\user\TimChatView.vue
  * @Description: 
  * 
@@ -11,7 +11,7 @@
   <div class="container">
     <div class="chat-left">
       <div class="chat-action">
-        <el-button :icon="Plus" text bg>发起单聊</el-button>
+        <el-button :icon="Plus" text bg @click="openSearch">发起单聊</el-button>
       </div>
 
       <div class="user-list" v-loading="userListLoading">
@@ -20,7 +20,20 @@
           v-for="item in userList"
           :key="item.userId"
           @click="selectUserFun(item)"
+          @click.prevent.right="toggleDialog(item)"
+          ref="userItemRef"
         >
+          <div
+            v-show="rightClickToggle && item.conversationID === curRightMenuInfo?.conversationID"
+            class="right-menu"
+            ref="rightMenuRef"
+          >
+            <div v-for="button in rightMenuButtons" :key="button.text">
+              <el-button :type="button.type" text @click.stop="button.clickFunc">
+                {{ button.text }}
+              </el-button>
+            </div>
+          </div>
           <img
             class="avatar"
             :src="item.avatar || 'https://web.sdk.qcloud.com/component/TUIKit/assets/avatar_21.png'"
@@ -160,6 +173,61 @@
         </span>
       </template>
     </el-dialog>
+    <el-dialog v-model="dialogSearchVisible" title="发起单聊" width="80%">
+      <div class="search-container">
+        <div class="left">
+          <el-input
+            placeholder="请输入userId"
+            v-model="searchUserID"
+            @keyup.enter="handleSearch"
+          ></el-input>
+          <el-radio-group class="radio-group" v-model="curSearchUser">
+            <el-radio
+              v-for="item in searchUserList"
+              :key="item.userID"
+              :label="item.userID"
+              size="large"
+            >
+              <div class="user-item">
+                <img
+                  class="avatar"
+                  :src="
+                    item.avatar ||
+                    'https://web.sdk.qcloud.com/component/TUIKit/assets/avatar_21.png'
+                  "
+                  alt=""
+                />
+                <span class="name">{{ item.userID }}</span>
+              </div>
+            </el-radio>
+          </el-radio-group>
+        </div>
+        <div class="right">
+          <div>发起单聊</div>
+
+          <div v-if="curSearchUserInfo" class="user-item">
+            <img
+              class="avatar"
+              :src="
+                curSearchUserInfo.avatar ||
+                'https://web.sdk.qcloud.com/component/TUIKit/assets/avatar_21.png'
+              "
+              alt=""
+            />
+            <span>{{ curSearchUserInfo.userID }}</span>
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogSearchVisible = false">取消</el-button>
+          <el-button :disabled="!curSearchUserInfo" type="primary" @click="startChatting">
+            完成
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -167,6 +235,7 @@
 import TencentCloudChat from '@tencentcloud/chat'
 import { genTestUserSig } from '@/utils/getUserSig/GenerateTestUserSig'
 import { SDKAppID, secretKey } from '@/config/timConfig'
+import { onClickOutside, useElementBounding } from '@vueuse/core'
 import {
   base64ToFile,
   isBase64,
@@ -174,7 +243,7 @@ import {
   caculateTimeago,
   calculateTimestamp
 } from '@/utils/util'
-import { getCurrentInstance } from '@vue/runtime-core'
+import { getCurrentInstance, ref } from '@vue/runtime-core'
 const {
   appContext: {
     config: {
@@ -182,6 +251,8 @@ const {
     }
   }
 } = getCurrentInstance()
+const rightMenuRef = ref(null)
+const userItemRef = ref(null)
 
 const userList = ref()
 const userListLoading = ref(false)
@@ -192,8 +263,17 @@ const messageList = ref()
 const textarea = ref()
 const messageListRef = ref()
 const dialogVisible = ref(false)
+const dialogSearchVisible = ref(false)
 const curUserID = ref('123456')
-const percentage = ref(0)
+const searchUserID = ref()
+
+const curSearchUser = ref('')
+const searchUserList = ref([])
+const curSearchUserInfo = computed(() => {
+  return searchUserList.value.find((item) => item.userID === curSearchUser.value)
+})
+
+const curRightMenuInfo = ref()
 const colors = [
   { color: '#f56c6c', percentage: 20 },
   { color: '#e6a23c', percentage: 40 },
@@ -202,7 +282,40 @@ const colors = [
   { color: '#6f7ad3', percentage: 100 }
 ]
 
+const rightClickToggle = ref(false)
+
+const rightMenuButtons = [
+  {
+    type: 'primary',
+    text: '删除会话',
+    clickFunc: () => {
+      console.log('删除会话')
+      console.log(curRightMenuInfo.value, 'curRightMenuInfo')
+      TIM.deleteConversation(curRightMenuInfo.value.conversationID)
+    }
+  },
+  {
+    type: 'success',
+    text: '置顶会话',
+    clickFunc: () => {
+      console.log('置顶会话')
+    }
+  },
+  {
+    type: 'info',
+    text: '消息免打扰',
+    clickFunc: () => {
+      console.log('消息免打扰')
+    }
+  }
+]
+// 点击外部关闭右键菜单
+onClickOutside(rightMenuRef, () => {
+  rightClickToggle.value = false
+})
+
 let placeholder = ref('请输入消息')
+
 userList.value = [
   // {
   //   url: 'https://web.sdk.qcloud.com/im/assets/images/Public.svg',
@@ -315,51 +428,6 @@ function textareaKeydown(event) {
   }
 }
 
-const handleFileDropOrPaste = async (e: any, type: string) => {
-  console.log(e, type, 'sayudiuasduy')
-  e.preventDefault()
-  e.stopPropagation()
-
-  if ((type === 'drop' && e.dataTransfer) || (type === 'paste' && e.clipboardData)) {
-    const files = type === 'drop' ? e?.dataTransfer?.files : e?.clipboardData?.files
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      const isImage = file.type.startsWith('image/')
-      const fileSrc = isImage ? URL.createObjectURL(file) : await drawFileCanvasToImageUrl(file)
-      console.log(fileSrc, 'fileSrc')
-
-      // textarea.value.childNodes.push({
-      //   type: 'image',
-      //   url: fileSrc,
-      //   width: 50,
-      //   height: 50
-      // })
-
-      // {
-      //       type: 'image',
-      //       url: editorChildNodes[i].src,
-      //       width: +dataset.width,
-      //       height: +dataset.height
-      //     }
-      // editor?.value?.commands?.insertContent({
-      //   type: 'custom-image',
-      //   attrs: {
-      //     src: fileSrc,
-      //     alt: file?.name,
-      //     title: file?.name,
-      //     class: isImage ? 'normal' : 'file'
-      //   }
-      // })
-      // fileMap.set(fileSrc, file)
-      // if (i === files.length - 1) {
-      //   setTimeout(() => {
-      //     editor?.value?.commands?.focus('end')
-      //     editor?.value?.commands?.scrollIntoView()
-      //   }, 10)
-      // }
-    }
-  }
-}
 const IMLogin = () => {
   userListLoading.value = true
 
@@ -428,45 +496,45 @@ TIM.on(TencentCloudChat.EVENT.SDK_NOT_READY, onSdkNotReady)
 
 // 会话列表更新，event.data 是包含 Conversation 对象的数组。
 let onConversationListUpdated = function (event) {
-  console.log(event.data, '22222') // 包含 Conversation 实例的数组
-  userList.value = event.data
-  // userList.value = []
+  console.log(event.data, '22222222222222222') // 包含 Conversation 实例的数组
+  // userList.value = event.data
+
   userListLoading.value = false
 
-  getMessageList(currentUser.value)
+  getConversationList()
 }
 TIM.on(TencentCloudChat.EVENT.CONVERSATION_LIST_UPDATED, onConversationListUpdated)
 
 let onSdkReady = function (event) {
-  if (userList.value.length > 0 && !currentUser?.value?.conversationID) {
-    selectUserFun(userList.value[0])
-  }
+  console.log('onSdkReady')
 }
 TIM.on(TencentCloudChat.EVENT.SDK_READY, onSdkReady)
 
-// function getConversationList() {
-//   // 获取全量的会话列表
-//   let promise = TIM.getConversationList()
-//   promise
-//     .then(function (imResponse) {
-//       // 全量的会话列表，用该列表覆盖原有的会话列表
-//       const conversationList = imResponse.data.conversationList
-//       // 从云端同步会话列表是否完成
-//       const isSyncCompleted = imResponse.data.isSyncCompleted
-//       console.log(conversationList, 'conversationList', isSyncCompleted, imResponse)
-//     })
-//     .catch(function (imError) {
-//       // 获取会话列表失败的相关信息
-//       console.warn('getConversationList error:', imError)
-//     })
-// }
+// 获取全量的会话列表
+function getConversationList() {
+  let promise = TIM.getConversationList()
+  promise
+    .then(function (imResponse) {
+      console.log(imResponse, '全量会话列表')
+      // 全量的会话列表，用该列表覆盖原有的会话列表
+      const conversationList = imResponse.data.conversationList
+      userList.value = conversationList
+      selectUserFun(userList.value[0])
+      // 从云端同步会话列表是否完成
+      const isSyncCompleted = imResponse.data.isSyncCompleted
+      console.log(conversationList, 'conversationList', isSyncCompleted, imResponse)
+    })
+    .catch(function (imError) {
+      // 获取会话列表失败的相关信息
+      console.warn('getConversationList error:', imError)
+    })
+}
 function getMessageList(params = {}) {
   if (!params.conversationID) return
   chatLoading.value = true
 
   let promise = TIM.getMessageList({ conversationID: params.conversationID })
   promise.then(function (imResponse) {
-    console.log(imResponse, 'imResponseimResponse')
     chatLoading.value = false
     messageList.value = imResponse.data.messageList // 消息列表。
     const nextReqMessageID = imResponse.data.nextReqMessageID // 用于续拉，分页续拉时需传入该字段。
@@ -545,6 +613,43 @@ function getFile(e) {
   console.log(e.target.files[0])
 
   createImageMessage(e.target.files[0], 'image')
+}
+// 开始聊天
+function startChatting() {
+  dialogSearchVisible.value = false
+  const name = `C2C${curSearchUserInfo.value.userID}`
+  console.log(name, 'name')
+  TIM.getConversationProfile(name).then((imResponse: any) => {
+    console.log(imResponse, 'imResponse')
+    currentUser.value = imResponse.data.conversation
+    selectUserFun(currentUser.value)
+    // 通知 TUIConversation 模块切换当前会话
+    // Notify TUIConversation to toggle the current conversation
+    // TUIServer.TUICore.TUIServer.TUIConversation.handleCurrentConversation(imResponse.data.conversation);
+  })
+}
+// 搜索聊天用户
+function handleSearch() {
+  curSearchUserInfo.value = {}
+  TIM.getUserProfile({
+    userIDList: [searchUserID.value] // 请注意：即使只拉取一个用户的资料，也需要用数组类型，例如：userIDList: ['user1']
+  }).then((res) => {
+    if (res.data.length === 0) {
+      return ElMessage.error('该用户不存在')
+    }
+    searchUserList.value = [...res.data, ...res.data]
+  })
+}
+// 打开搜索对话框
+function openSearch() {
+  dialogSearchVisible.value = true
+}
+// 用户右击事件
+
+function toggleDialog(item) {
+  console.log('toggleDialog')
+  curRightMenuInfo.value = item
+  rightClickToggle.value = true
 }
 </script>
 
