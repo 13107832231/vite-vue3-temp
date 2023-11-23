@@ -2,7 +2,7 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-10-19 13:41:02
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-11-23 15:38:08
+ * @LastEditTime: 2023-11-23 15:50:29
  * @FilePath: \vite-vue3-temp\src\views\user\TimChatView.vue
  * @Description: 
  * 
@@ -21,7 +21,6 @@
           :key="item.userId"
           @click="selectUserFun(item)"
           @click.prevent.right="toggleDialog(item)"
-          ref="userItemRef"
         >
           <div
             v-show="rightClickToggle && item.conversationID === curRightMenuInfo?.conversationID"
@@ -235,7 +234,8 @@
 import TencentCloudChat from '@tencentcloud/chat'
 import { genTestUserSig } from '@/utils/getUserSig/GenerateTestUserSig'
 import { SDKAppID, secretKey } from '@/config/timConfig'
-import { onClickOutside, useElementBounding } from '@vueuse/core'
+import { onClickOutside, } from '@vueuse/core'
+import {Plus} from '@element-plus/icons-vue'
 import {
   base64ToFile,
   isBase64,
@@ -252,7 +252,6 @@ const {
   }
 } = getCurrentInstance()
 const rightMenuRef = ref(null)
-const userItemRef = ref(null)
 
 const userList = ref()
 const userListLoading = ref(false)
@@ -264,7 +263,9 @@ const textarea = ref()
 const messageListRef = ref()
 const dialogVisible = ref(false)
 const dialogSearchVisible = ref(false)
+// 当前用户id
 const curUserID = ref('123456')
+// 单聊用户id
 const searchUserID = ref()
 
 const curSearchUser = ref('')
@@ -273,7 +274,6 @@ const curSearchUserInfo = computed(() => {
   return searchUserList.value.find((item) => item.userID === curSearchUser.value)
 })
 
-const curRightMenuInfo = ref()
 const colors = [
   { color: '#f56c6c', percentage: 20 },
   { color: '#e6a23c', percentage: 40 },
@@ -282,15 +282,18 @@ const colors = [
   { color: '#6f7ad3', percentage: 100 }
 ]
 
+// 当前右键菜单信息
+const curRightMenuInfo = ref()
+// 右键菜单显隐
 const rightClickToggle = ref(false)
 
+// 右键菜单按钮
 const rightMenuButtons = [
   {
     type: 'primary',
     text: '删除会话',
     clickFunc: () => {
       console.log('删除会话')
-      console.log(curRightMenuInfo.value, 'curRightMenuInfo')
       TIM.deleteConversation(curRightMenuInfo.value.conversationID)
     }
   },
@@ -415,6 +418,7 @@ function textareaRange() {
   sel.addRange(range)
 }
 
+// 监听键盘事件
 function textareaKeydown(event) {
   console.log(event.target.childNodes, 'event')
   if (event.ctrlKey && event.keyCode === 13) {
@@ -428,6 +432,7 @@ function textareaKeydown(event) {
   }
 }
 
+// 登录
 const IMLogin = () => {
   userListLoading.value = true
 
@@ -456,10 +461,11 @@ const IMLogin = () => {
   dialogVisible.value = false
 }
 
+// 监听消息
 let onMessageReceived = function (event) {
   // event.data - 存储 Message 对象的数组 - [Message]
   messageList.value = event.data
-  console.log(messageList.value, ' messageList.value111')
+  console.log(messageList.value, 'messageList.value111')
   messageList.value.forEach((message) => {
     if (message.type === TencentCloudChat.TYPES.MSG_TEXT) {
       // 文本消息 - https://web.sdk.qcloud.com/im/doc/v3/zh-cn/Message.html#.TextPayload
@@ -499,8 +505,6 @@ let onConversationListUpdated = function (event) {
   console.log(event.data, '22222222222222222') // 包含 Conversation 实例的数组
   // userList.value = event.data
 
-  userListLoading.value = false
-
   getConversationList()
 }
 TIM.on(TencentCloudChat.EVENT.CONVERSATION_LIST_UPDATED, onConversationListUpdated)
@@ -515,6 +519,7 @@ function getConversationList() {
   let promise = TIM.getConversationList()
   promise
     .then(function (imResponse) {
+      userListLoading.value = false
       console.log(imResponse, '全量会话列表')
       // 全量的会话列表，用该列表覆盖原有的会话列表
       const conversationList = imResponse.data.conversationList
@@ -529,6 +534,8 @@ function getConversationList() {
       console.warn('getConversationList error:', imError)
     })
 }
+
+// 获取消息列表
 function getMessageList(params = {}) {
   if (!params.conversationID) return
   chatLoading.value = true
@@ -644,8 +651,8 @@ function handleSearch() {
 function openSearch() {
   dialogSearchVisible.value = true
 }
-// 用户右击事件
 
+// 用户右击事件
 function toggleDialog(item) {
   console.log('toggleDialog')
   curRightMenuInfo.value = item
