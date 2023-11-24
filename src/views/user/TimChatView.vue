@@ -2,7 +2,7 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-10-19 13:41:02
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-11-23 15:50:29
+ * @LastEditTime: 2023-11-24 14:16:39
  * @FilePath: \vite-vue3-temp\src\views\user\TimChatView.vue
  * @Description: 
  * 
@@ -644,7 +644,7 @@ function handleSearch() {
     if (res.data.length === 0) {
       return ElMessage.error('该用户不存在')
     }
-    searchUserList.value = [...res.data, ...res.data]
+    searchUserList.value = res.data
   })
 }
 // 打开搜索对话框
