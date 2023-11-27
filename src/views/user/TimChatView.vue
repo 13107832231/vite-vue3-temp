@@ -234,8 +234,8 @@
 import TencentCloudChat from '@tencentcloud/chat'
 import { genTestUserSig } from '@/utils/getUserSig/GenerateTestUserSig'
 import { SDKAppID, secretKey } from '@/config/timConfig'
-import { onClickOutside, } from '@vueuse/core'
-import {Plus} from '@element-plus/icons-vue'
+import { onClickOutside } from '@vueuse/core'
+import { Plus } from '@element-plus/icons-vue'
 import {
   base64ToFile,
   isBase64,
