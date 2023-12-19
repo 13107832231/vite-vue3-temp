@@ -2,7 +2,7 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-08-31 14:12:02
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-11-17 10:14:29
+ * @LastEditTime: 2023-12-19 15:53:03
  * @FilePath: \vite-vue3-temp\src\utils\menuList.ts
  * @Description: 
  * 
@@ -43,6 +43,26 @@ const menuList: any = [
         name: 'echarts数据图表',
         path: '/largeData/screen',
         key: 'largeDataScreen'
+      },
+
+
+    ]
+  },
+  {
+    name: '有趣的示例',
+    path: '/interestingDemo',
+    key: 'dragAndZoomBox',
+    icon: 'setting',
+    children: [
+      {
+        name: '拖拽缩放盒子',
+        path: '/interestingDemo/dragAndZoomBox',
+        key: 'dragAndZoomBox'
+      },
+      {
+        name: '跨窗口渲染动画',
+        path: '/markCrossWindow',
+        key: 'markCrossWindow'
       },
 
 

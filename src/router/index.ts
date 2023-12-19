@@ -2,7 +2,7 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-08-18 09:49:05
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-11-16 16:03:08
+ * @LastEditTime: 2023-12-19 09:58:47
  * @FilePath: \vite-vue3-temp\src\router\index.ts
  * @Description: 
  * 
@@ -42,6 +42,7 @@ const router: Routers[] = [
     children: [
       modules.user,
       modules.largeData,
+      modules.interestingDemo,
     ]
   },
 
@@ -50,6 +51,12 @@ const router: Routers[] = [
     name: 'userLogin',
 
     component: () => import('@/views/LoginView.vue')
+  },
+  {
+    path: '/markCrossWindow',
+    name: 'markCrossWindow',
+
+    component: () => import('@/views/markCrossWindow/index.vue')
   }
 ];
 const cRouter = createRouter({
