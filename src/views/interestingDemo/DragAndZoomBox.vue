@@ -2,7 +2,7 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-12-08 11:09:22
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-12-19 15:55:39
+ * @LastEditTime: 2023-12-27 16:11:18
  * @FilePath: \vite-vue3-temp\src\views\InterestingDemo\DragAndZoomBox.vue
  * @Description: 
  * 
@@ -22,7 +22,7 @@
   </div>
 </template>
 
-<script setup >
+<script setup>
 const dragRef = ref(null)
 onMounted(() => {
   console.log(dragRef, 'ssss')
@@ -82,22 +82,76 @@ function startResize(event) {
       height = startHeight,
       left = startLeft,
       top = startTop
-    if (direction.includes('left')) {
-      width = startWidth - dx + 'px'
-      left = startLeft + dx / 2 + 'px'
+    switch (direction) {
+      case 'left':
+        width = startWidth - dx / 2 + 'px'
+        left = startLeft + dx + 'px'
+
+        break
+      case 'top-left':
+        width = startWidth - dx / 2 + 'px'
+        left = startLeft + dx / 2 + 'px'
+        height = startHeight - dy / 2 + 'px'
+        top = startTop + dy / 2 + 'px'
+
+        break
+      case 'bottom-left':
+        width = startWidth - dx / 2 + 'px'
+        left = startLeft + dx / 2 + 'px'
+        height = startHeight + dy + 'px'
+        top = startTop + 'px'
+
+        break
+      case 'right':
+        width = startWidth + dx + 'px'
+        left = startLeft + 'px'
+
+        break
+      case 'top-right':
+        width = startWidth + dx / 2 + 'px'
+        left = startLeft + 'px'
+        height = startHeight - dy / 2 + 'px'
+        top = startTop + dy / 2 + 'px'
+
+        break
+      case 'bottom-right':
+        width = startWidth + dx / 2 + 'px'
+        left = startLeft + 'px'
+        height = startHeight + dy / 2 + 'px'
+        top = startTop + 'px'
+
+        break
+      case 'top':
+        height = startHeight - dy + 'px'
+        top = startTop + dy + 'px'
+
+        break
+      case 'bottom':
+        height = startHeight + dy + 'px'
+        top = startTop + 'px'
+
+        break
+
+      default:
+        break
     }
-    if (direction.includes('right')) {
-      width = startWidth + dx + 'px'
-      left = startLeft + dx / 2 + 'px'
-    }
-    if (direction.includes('top')) {
-      height = startHeight - dy + 'px'
-      top = startTop + dy / 2 + 'px'
-    }
-    if (direction.includes('bottom')) {
-      height = startHeight + dy + 'px'
-      top = startTop + dy / 2 + 'px'
-    }
+
+    // if (direction.includes('left')) {
+    //   width = startWidth - dx / 2 + 'px'
+    //   left = startLeft + dx / 2 + 'px'
+    // }
+    // if (direction.includes('right')) {
+    //   width = startWidth + dx / 2 + 'px'
+    //   left = startLeft + dx / 2 + 'px'
+    // }
+    // if (direction.includes('top')) {
+    //   height = startHeight - dy / 2 + 'px'
+    //   top = startTop + dy / 2 + 'px'
+    // }
+    // if (direction.includes('bottom')) {
+    //   height = startHeight + dy + 'px'
+    //   top = startTop + dy / 2 + 'px'
+    // }
     if (parseInt(width) <= 0 || parseInt(height) <= 0) return
     dragRef.value.style.width = width
     dragRef.value.style.height = height

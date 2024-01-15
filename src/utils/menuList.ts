@@ -2,7 +2,7 @@
  * @Author: zhengjiefeng zhengjiefeng
  * @Date: 2023-08-31 14:12:02
  * @LastEditors: zhengjiefeng zhengjiefeng
- * @LastEditTime: 2023-12-19 15:53:03
+ * @LastEditTime: 2024-01-12 13:56:58
  * @FilePath: \vite-vue3-temp\src\utils\menuList.ts
  * @Description: 
  * 
@@ -63,6 +63,16 @@ const menuList: any = [
         name: '跨窗口渲染动画',
         path: '/markCrossWindow',
         key: 'markCrossWindow'
+      },
+      {
+        name: '流动边框',
+        path: '/interestingDemo/flowingBorder',
+        key: 'flowingBorder'
+      },
+      {
+        name: '传送阵动画',
+        path: '/interestingDemo/transferAnimation',
+        key: 'transferAnimation'
       },
 
 
